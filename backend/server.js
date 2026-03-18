@@ -1,11 +1,14 @@
 const express = require("express")
 const axios = require("axios")
 const cors = require("cors")
-const PORT = process.env.PORT || 5000;
+
 const app = express()
-app.use(cors())
 
-
+app.use(cors({
+  origin: "*",
+  methods: ["GET"],
+  allowedHeaders: ["Content-Type"]
+}))
 
 const ACTUAL_API =
 "https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH?format=json&limit=2000"
@@ -23,29 +26,37 @@ function computeForecastSeries(actual, forecast, horizon){
    const targetTime = new Date(actualPoint.startTime)
 
    const cutoffTime = new Date(
-     targetTime.getTime() - horizon*60*60*1000
+     targetTime.getTime() - horizon * 60 * 60 * 1000
    )
 
-   const validForecasts = forecast.filter(f => {
-
-      const forecastTarget = new Date(f.startTime)
-      const publishTime = new Date(f.publishTime)
-
-      return (
-        forecastTarget.getTime() === targetTime.getTime() &&
-        publishTime <= cutoffTime
-      )
-
+   // STEP 1: loose matching
+   const sameTimeForecasts = forecast.filter(f => {
+     const forecastTarget = new Date(f.startTime)
+     return Math.abs(forecastTarget - targetTime) < 30 * 60 * 1000
    })
 
-   if(validForecasts.length === 0) return
+   if(sameTimeForecasts.length === 0) return
 
-   const latestForecast = validForecasts.sort(
-     (a,b)=> new Date(b.publishTime) - new Date(a.publishTime)
-   )[0]
+   // STEP 2: try strict horizon filter
+   let validForecasts = sameTimeForecasts.filter(f => {
+     const publishTime = new Date(f.publishTime)
+     return publishTime <= cutoffTime
+   })
+
+   // 🔥 STEP 3: fallback if empty
+   if(validForecasts.length === 0){
+     validForecasts = sameTimeForecasts
+   }
+
+   // STEP 4: pick latest forecast
+   const latestForecast = validForecasts.reduce((latest, current)=>{
+     return new Date(current.publishTime) > new Date(latest.publishTime)
+       ? current
+       : latest
+   })
 
    result.push({
-      startTime: latestForecast.startTime,
+      startTime: actualPoint.startTime,
       generation: latestForecast.generation
    })
 
@@ -53,8 +64,6 @@ function computeForecastSeries(actual, forecast, horizon){
 
  return result
 }
-
-
 
 app.get("/api/wind", async (req,res)=>{
 
@@ -80,6 +89,9 @@ app.get("/api/wind", async (req,res)=>{
       horizon
    )
 
+   console.log("Actual count:", actualWind.length)
+   console.log("Forecast count:", forecastSeries.length)
+
    res.json({
       actual: actualWind.slice(0,120),
       forecast: forecastSeries.slice(0,120)
@@ -98,7 +110,9 @@ app.get("/api/wind", async (req,res)=>{
 
 })
 
-app.listen(PORT, ()=>{
- console.log(`Backend running on ${PORT}`);
-});
+const PORT = process.env.PORT || 5000
+
+app.listen(PORT,()=>{
+ console.log(`Backend running on ${PORT}`)
+})
 

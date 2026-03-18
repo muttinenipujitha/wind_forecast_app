@@ -1,4 +1,3 @@
-
 import axios from "axios"
 
 const API_URL = "https://wind-backend-xw7q.onrender.com/api/wind"
