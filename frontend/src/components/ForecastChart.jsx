@@ -10,6 +10,7 @@ import {
  Tooltip
 } from "chart.js"
 
+
 ChartJS.register(
  LineElement,
  CategoryScale,
