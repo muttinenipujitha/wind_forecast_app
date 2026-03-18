@@ -129,8 +129,8 @@ This provides a conservative estimate of wind power contribution.
 
 ## Live Demo
 
-Frontend: https://windforecast.vercel.app/ 
-Backend API: https://wind-backend-xw7q.onrender.com/api/wind?horizon=4
+ * Frontend: https://windforecast.vercel.app/ 
+ * Backend API: https://wind-backend-xw7q.onrender.com/api/wind?horizon=4
 
 ## AI Usage Disclosure
 
