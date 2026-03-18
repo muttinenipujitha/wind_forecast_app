@@ -101,3 +101,4 @@ app.get("/api/wind", async (req,res)=>{
 app.listen(PORT, ()=>{
  console.log(`Backend running on ${PORT}`);
 });
+
