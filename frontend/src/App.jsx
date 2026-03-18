@@ -4,6 +4,7 @@ import ForecastChart from "./components/ForecastChart"
 import { fetchWindData } from "./services/api"
 
 
+
 export default function App(){
 
  const [actual,setActual] = useState([])
